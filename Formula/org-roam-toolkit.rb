@@ -17,8 +17,8 @@
 class OrgRoamToolkit < Formula
   desc "MCP server and Claude Code plugin for Emacs org-roam"
   homepage "https://github.com/iBenjamin/org-roam-toolkit"
-  url "https://github.com/iBenjamin/org-roam-toolkit/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "70454d1341a904790c2de948c46df658671001ed12d73c216a957e59ced149ab"
+  url "https://github.com/iBenjamin/org-roam-toolkit/archive/refs/tags/v0.2.0.tar.gz"
+  sha256 "5d5f63447f40bb9ebd674402939cca16acaf6d2693b648588c7bda9ba2e98639"
   license "MIT"
   head "https://github.com/iBenjamin/org-roam-toolkit.git", branch: "main"
 
@@ -34,13 +34,15 @@ class OrgRoamToolkit < Formula
     # due to workspace edges; the resulting tree is still functional.
     system "npm", "prune", "--omit=dev"
 
-    # --- Rust side: ortk-dashboard / ortk-mcp ---------------------------
+    # --- Rust side: ortk-dashboard / ortk-agent-install / ortk-mcp ------
     system "cargo", "install", *std_cargo_args(path: "packages/dashboard-server")
+    system "cargo", "install", *std_cargo_args(path: "packages/agent-install")
     system "cargo", "install", *std_cargo_args(path: "mcp-servers/org-roam")
 
     # Keep Cargo build artifacts out of libexec; the target directories are
     # large and not needed at runtime.
     rm_r "mcp-servers/org-roam/target"
+    rm_r "packages/agent-install/target"
     rm_r "packages/dashboard-server/target"
 
     # --- Stage everything under libexec --------------------------------
@@ -64,11 +66,20 @@ class OrgRoamToolkit < Formula
 
   def caveats
     <<~EOS
-      To enable the Claude Code plugin (commands + skills + MCP server registration):
+      To enable Claude Code and Codex integrations:
 
-        ln -snf #{opt_libexec}/plugins/org-roam-toolkit ~/.claude/plugins/org-roam-toolkit
+        ortk-agent-install all
 
-      Then restart Claude Code to load the plugin.
+      Or install one agent at a time:
+
+        ortk-agent-install claude
+        ortk-agent-install codex
+
+      The installer links the plugin into ~/.claude/plugins and ~/.codex/plugins.
+      For Codex, it also adds [mcp_servers.org-roam] to ~/.codex/config.toml
+      backing up an existing config before changing it.
+
+      Restart Claude Code or Codex to load the plugin.
 
       To start the observability dashboard at login:
 
@@ -89,6 +100,12 @@ class OrgRoamToolkit < Formula
   test do
     # ortk-dashboard responds to --version (built from cargo, has version baked in)
     assert_match version.to_s, shell_output("#{bin}/ortk-dashboard --version")
+    assert_match "ortk-agent-install", shell_output("#{bin}/ortk-agent-install --help")
+    with_env(HOME: testpath) do
+      assert_match "would link",
+                   shell_output("#{bin}/ortk-agent-install all --dry-run --plugin-dir " \
+                                "#{opt_libexec}/plugins/org-roam-toolkit")
+    end
     # ortk-emacs-eval --help works without a daemon
     assert_match "emacs-eval", shell_output("#{bin}/ortk-emacs-eval --help")
   end
