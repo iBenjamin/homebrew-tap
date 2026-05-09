@@ -17,8 +17,8 @@
 class OrgRoamToolkit < Formula
   desc "MCP server and Claude Code plugin for Emacs org-roam"
   homepage "https://github.com/iBenjamin/org-roam-toolkit"
-  url "https://github.com/iBenjamin/org-roam-toolkit/archive/refs/tags/v0.2.4.tar.gz"
-  sha256 "98e6138daf10a3d4a954a0a1662e6845ff908de2fb35d0d128b7e2594529b334"
+  url "https://github.com/iBenjamin/org-roam-toolkit/archive/refs/tags/v0.2.5.tar.gz"
+  sha256 "1bf453830d3bf528e7d750a3db7c9ff57574c8287c7cfb8dfdf624e41b0e86db"
   license "MIT"
   head "https://github.com/iBenjamin/org-roam-toolkit.git", branch: "main"
 
@@ -75,7 +75,9 @@ class OrgRoamToolkit < Formula
         ortk-agent-install claude
         ortk-agent-install codex
 
-      The installer links the plugin into ~/.claude/plugins for Claude Code.
+      The installer copies the plugin into ~/.claude/plugins/cache for Claude
+      Code, registers it in installed_plugins.json + known_marketplaces.json,
+      and writes a marketplace stub under ~/.claude/plugins/marketplaces.
       For Codex, it copies the plugin into ~/.codex/plugins/cache, enables
       [plugins."org-roam-toolkit@org-roam-toolkit"], and adds
       [mcp_servers.org-roam] to ~/.codex/config.toml, backing up an existing
